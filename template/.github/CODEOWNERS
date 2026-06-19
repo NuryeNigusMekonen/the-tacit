@@ -1,0 +1,31 @@
+# CODEOWNERS - auto-assigns human reviewers to PRs (Tenacious Standard §1, §2).
+# Fixes the "no human review" gap: a human is pulled onto sensitive changes.
+#
+# ============================================================================
+# THIS IS A PLACEHOLDER. Each project is owned by a DIFFERENT team, so the
+# reviewers below MUST be set per project. Two ways to do that:
+#
+#   1. Manually: replace the owners below with this project's real GitHub
+#      team(s) (e.g. @get10acious/team-alpha) or individual @usernames.
+#
+#   2. Automatically: The Tacit's bootstrapper fills this in when the project
+#      is onboarded, using the team / Tech Lead / Project Owner recorded for
+#      that specific project - so each team's project routes reviews to that
+#      team. (The template can't know the team; the central system does.)
+#
+# Until set, replace every @ORG/<team> with a real team or @username.
+# ============================================================================
+
+# Default owner for everything (this project's team).
+*                   @ORG/PROJECT_TEAM
+
+# Sensitive surfaces (Standard §1 risk areas) - require closer review.
+**/auth/**          @ORG/PROJECT_TECH_LEADS
+**/security/**      @ORG/PROJECT_TECH_LEADS
+**/migrations/**    @ORG/PROJECT_TECH_LEADS
+**/alembic/**       @ORG/PROJECT_TECH_LEADS
+/.github/**         @ORG/PROJECT_TECH_LEADS
+
+# Highest-risk areas - Tech Lead + Project Owner (rename to your folders).
+**/billing/**       @ORG/PROJECT_TECH_LEADS @ORG/PROJECT_OWNERS
+**/payments/**      @ORG/PROJECT_TECH_LEADS @ORG/PROJECT_OWNERS

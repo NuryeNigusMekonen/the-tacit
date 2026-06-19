@@ -1,0 +1,62 @@
+# Test enforcement (Tenacious Standard §1, §6) - makes testing real, not optional.
+# 1. Coverage gate: fail if coverage drops below the threshold.
+# 2. Changed-code-needs-a-test: warn when a PR changes code but adds no tests.
+name: coverage
+
+on:
+  pull_request:
+
+permissions:
+  contents: read
+
+env:
+  MIN_COVERAGE: "60"   # starting threshold; raise as the suite grows.
+
+jobs:
+  python-coverage:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Detect Python project
+        id: detect
+        run: |
+          if [ -f pyproject.toml ] || ls requirements*.txt >/dev/null 2>&1 || git ls-files '*.py' | grep -q .; then
+            echo "found=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "found=false" >> "$GITHUB_OUTPUT"
+            echo "No Python detected - skipping coverage gate."
+          fi
+      - uses: actions/setup-python@v5
+        if: steps.detect.outputs.found == 'true'
+        with:
+          python-version: "3.11"
+      - name: Install
+        if: steps.detect.outputs.found == 'true'
+        run: |
+          pip install pytest pytest-cov
+          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+          if [ -f pyproject.toml ]; then pip install -e . || true; fi
+      - name: Test with coverage gate
+        if: steps.detect.outputs.found == 'true'
+        run: pytest --cov=. --cov-report=term-missing --cov-fail-under=${MIN_COVERAGE}
+
+  changed-code-needs-test:
+    # Advisory: flags PRs that change source but add/modify no test files.
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Check for tests in the diff
+        run: |
+          set -euo pipefail
+          base="${{ github.event.pull_request.base.sha }}"
+          head="HEAD"
+          changed=$(git diff --name-only "$base" "$head")
+          code=$(echo "$changed" | grep -E '\.(py|js|jsx|ts|tsx)$' | grep -viE '(test|spec)' || true)
+          tests=$(echo "$changed" | grep -iE '(test|spec)' || true)
+          if [ -n "$code" ] && [ -z "$tests" ]; then
+            echo "::warning::This PR changes code but adds/updates no tests. Add proportionate tests (Standard §1)."
+          else
+            echo "Test check OK."
+          fi

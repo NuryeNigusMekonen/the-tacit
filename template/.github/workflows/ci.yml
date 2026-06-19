@@ -1,0 +1,92 @@
+# CI - the required checks behind the PR merge gate (Tenacious Standard §4).
+# Runs build / lint / test for Python and JS/React. The Tacit reads these
+# results for PR readiness. Make these required status checks in branch protection.
+#
+# Each job detects its language inside a step and skips cleanly if the repo
+# doesn't use it (job-level `if: hashFiles(...)` is not valid GitHub Actions).
+name: ci
+
+on:
+  pull_request:
+  push:
+    branches: ["**"]
+
+permissions:
+  contents: read
+
+jobs:
+  python:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Detect Python project
+        id: detect
+        run: |
+          if ls pyproject.toml requirements*.txt >/dev/null 2>&1 || ls **/pyproject.toml >/dev/null 2>&1; then
+            echo "found=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "found=false" >> "$GITHUB_OUTPUT"
+            echo "No Python project detected - skipping Python checks."
+          fi
+
+      - uses: actions/setup-python@v5
+        if: steps.detect.outputs.found == 'true'
+        with:
+          python-version: "3.11"
+
+      - name: Install
+        if: steps.detect.outputs.found == 'true'
+        run: |
+          python -m pip install --upgrade pip
+          pip install ruff pytest
+          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+          if [ -f pyproject.toml ]; then pip install -e . || true; fi
+
+      - name: Lint (ruff)
+        if: steps.detect.outputs.found == 'true'
+        run: ruff check .
+
+      - name: Format check (ruff)
+        if: steps.detect.outputs.found == 'true'
+        run: ruff format --check .
+
+      - name: Test (pytest)
+        if: steps.detect.outputs.found == 'true'
+        run: pytest -q
+
+  javascript:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Detect Node project
+        id: detect
+        run: |
+          if [ -f package.json ]; then
+            echo "found=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "found=false" >> "$GITHUB_OUTPUT"
+            echo "No Node project detected - skipping JS checks."
+          fi
+
+      - uses: actions/setup-node@v4
+        if: steps.detect.outputs.found == 'true'
+        with:
+          node-version: "20"
+
+      - name: Install
+        if: steps.detect.outputs.found == 'true'
+        run: npm ci || npm install
+
+      - name: Lint
+        if: steps.detect.outputs.found == 'true'
+        run: npm run lint --if-present
+
+      - name: Build
+        if: steps.detect.outputs.found == 'true'
+        run: npm run build --if-present
+
+      - name: Test
+        if: steps.detect.outputs.found == 'true'
+        run: npm test --if-present

@@ -121,6 +121,38 @@ Every AI result is stored separately as an `AiArtifact` - never mixed with decis
 - **Ships the secret-scanning kit (`Docs/SECRET_SCANNING_KIT.md`)** into every new repo as part of the skeleton (its §5 customization + `make install` auto-wiring is designed for this).
 - A **write** capability - uses governed write access (D); human-triggered (high-stakes tier). Draws on the `pre-build-process` doc as a template source (background only).
 
+### E1. Division of labour: maximize the template, then build the central system
+
+**Design intent:** push as much capability as sensibly possible **into the template** (local enforcement that runs inside each repo), and keep in the **central Tacit** only what genuinely needs shared state across repos/people/time. The template is the local muscle; The Tacit is the central brain. They are complementary halves.
+
+**Approved template core (v1 - confirmed):** these are the committed contents of the first template, each mapped to a Tenacious standard section or a real audit finding:
+1. **Secret scanning** (the kit) - pre-commit hook + CI net. *Fixes: credential leaks (§3).*
+2. **CI checks** - build / test / lint as required GitHub Actions. *The required checks The Tacit reads (§4).*
+3. **Dependency vulnerability scanning** - Dependabot (+ auto-update PRs). *Near-zero-effort security win.*
+4. **SAST** - Bandit (Python) / Semgrep as a CI job. *Real code-security depth beyond secrets.*
+5. **Coverage gate + "changed code needs a test"** - makes testing enforced, not optional. *Fixes: PRs shipped without tests.*
+6. **CODEOWNERS** - auto-assigns human reviewers on sensitive files. *Fixes: no human review.*
+7. **PR template** (+ issue templates) - forces "what changed and why." *Fixes: 27 PRs with no description.*
+
+**Also planned for the template (lower priority / fold in as feasible):**
+- **Code-quality checks in CI** - complexity & dead-code (ruff/vulture), duplicate-code (jscpd), PR-size check.
+- **Agent skills** (Tenacious-authored `SKILL.md` set) - e.g. `write-pr-description`, `self-review` (the §1 four questions), `verify-before-commit`, `secret-check`, `split-large-pr`.
+- **Workflow config** - CONTRIBUTING / definition-of-done, branch-protection config, `AGENTS.md`, `Makefile`, `.gitignore`, `.env.example`.
+
+> Net effect: a repo created from the template is **secure-by-default, tested-by-default, governed-by-default** - self-checking before The Tacit ever looks at it. Every item maps to a Tenacious standard section or a real audit finding; nothing is decorative.
+
+**Stays in the CENTRAL Tacit (needs shared state - cannot be per-repo files):**
+- The **policy engine / decisions** (readiness, promotion, release-gating with stored state).
+- **Release management** - the Release Log + Environments view across releases over time.
+- **Users, roles, approvals** (K) - identity and joint approval are central, not per-repo.
+- **Audit trail** - one permanent cross-project record.
+- **Tacit knowledge** (J) - learning *across* projects is impossible if siloed per repo.
+- The **dashboard** - one pane over many projects.
+
+**How they connect:** the template enforces locally and produces signals (CI results, scan findings); The Tacit reads those, applies the engine, records decisions, and remembers across projects. Build order: the **template can ship first / independently** (it's just a GitHub repo + config, no central system needed); the central Tacit is then built on top to govern across repos.
+
+**Per-project, per-team config (CODEOWNERS):** because the org has **different teams owning different projects**, anything that names *who reviews* cannot be hardcoded in the shared template. The template ships a clearly-marked **placeholder CODEOWNERS**; the correct reviewers are set per project either (a) manually by the team, or (b) **by The Tacit's bootstrapper**, which knows that project's team / Tech Lead / Project Owner from onboarding and writes the right CODEOWNERS for it. This is a concrete example of the split: the template can't know the team, the central system can - so the template stays generic and The Tacit personalizes it per project.
+
 **F. Code-quality & security scanner**
 - Analyze a project's repo and produce **professional, actionable findings**: hardcoded credentials/secrets, unused variables/methods/constants/imports, duplicate code & repeated patterns, general defects/inconsistencies, improvement insights.
 - **Wraps proven open-source tools** behind a `ScannerPort` (e.g. gitleaks for secrets, ruff/vulture for unused code, jscpd for duplication); AI summarizes findings into actionable guidance. Not a custom static-analysis engine. Mirrors the `Tools.md` Repo Analyzer / PR Reviewer, generalized to the Tenacious standard, multi-language.

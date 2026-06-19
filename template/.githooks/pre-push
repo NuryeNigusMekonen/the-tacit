@@ -1,0 +1,31 @@
+#!/usr/bin/env bash
+# Pre-push hook - last local gate before secrets leave the machine (Standard §3).
+# Scans every commit range being pushed, so a secret added in an earlier local
+# commit (not just the tip) is still caught before it reaches the remote.
+set -euo pipefail
+repo_root="$(git rev-parse --show-toplevel)"
+z40=0000000000000000000000000000000000000000
+rc=0
+
+# stdin: <local-ref> <local-sha> <remote-ref> <remote-sha> per pushed ref.
+while read -r _localref localsha _remoteref remotesha; do
+  [ "$localsha" = "$z40" ] && continue            # branch deletion - nothing to scan
+  if [ "$remotesha" = "$z40" ]; then
+    base="$(git rev-list "$localsha" --not --remotes 2>/dev/null | tail -1 || true)"
+    if [ -n "$base" ]; then range="${base}^..${localsha}"; else range="${localsha}~1..${localsha}"; fi
+  else
+    range="${remotesha}..${localsha}"
+  fi
+
+  if command -v gitleaks >/dev/null 2>&1 && [ -f "$repo_root/.gitleaks.toml" ]; then
+    gitleaks detect --redact --no-banner --config "$repo_root/.gitleaks.toml" \
+      --log-opts="${range}" || rc=1
+  fi
+  "$repo_root/scripts/secret-scan.sh" --range "$range" || rc=1
+done
+
+if [ "$rc" -ne 0 ]; then
+  echo "pre-push: secrets detected in the commits being pushed - push blocked." >&2
+  echo "Rotate any real secret that already reached a commit; history removal is not enough." >&2
+fi
+exit $rc

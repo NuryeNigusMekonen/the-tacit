@@ -1,0 +1,15 @@
+#!/usr/bin/env bash
+# Pre-commit hook - blocks commits that introduce secrets (Standard §3).
+# Wired via:  git config core.hooksPath .githooks   (run scripts/install-hooks.sh)
+set -euo pipefail
+repo_root="$(git rev-parse --show-toplevel)"
+
+# Prefer gitleaks if present (fuller coverage); always also run the precise
+# zero-dep scanner so protection holds even when gitleaks isn't installed.
+if command -v gitleaks >/dev/null 2>&1 && [ -f "$repo_root/.gitleaks.toml" ]; then
+  gitleaks protect --staged --redact --no-banner \
+    --config "$repo_root/.gitleaks.toml" || {
+      echo "gitleaks: staged changes contain secrets - commit blocked." >&2; exit 1; }
+fi
+
+exec "$repo_root/scripts/secret-scan.sh" --staged

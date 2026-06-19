@@ -1,0 +1,34 @@
+# gitleaks config (Standard §3) - used by the local hooks IF gitleaks is
+# installed, and by CI if enabled. Extends the built-in ruleset; adds a
+# repo-specific rule + allowlist. The zero-dep scanner runs regardless, so
+# gitleaks is optional (fuller coverage when present).
+title = "tenacious gitleaks config"
+
+[extend]
+useDefault = true
+
+# --- repo-specific rules ------------------------------------------------------
+[[rules]]
+id = "db-connection-uri-with-password"
+description = "Database/broker connection URI carrying an inline password"
+regex = '''(postgres(ql)?|mysql|mariadb|mongodb(\+srv)?|amqps?|rediss?)(\+[a-z0-9]+)?://[^:/?#@\s]+:[^@/?#\s]{3,}@'''
+tags = ["database", "credentials"]
+
+# --- allowlist ----------------------------------------------------------------
+[allowlist]
+description = "Placeholders, dev defaults, and files that describe secret patterns"
+paths = [
+  '''.*\.env\.example$''',
+  '''.*\.gitleaks\.toml$''',
+  '''.*/secret-scan\.sh$''',
+  '''.*/pull_request_template\.md$''',
+  '''(.*/)?package-lock\.json$''',
+  '''(.*/)?AGENTS\.md$''',
+  '''(.*/)?README\.md$''',
+  '''(.*/)?CONTRIBUTING\.md$''',
+  '''(.*/)?SECURITY\.md$''',
+]
+regexes = [
+  '''\$\{[A-Z0-9_]+(:-[^}]*)?\}''',
+  '''(REPLACE|EXAMPLE|changeme|your[-_]|placeholder|dummy|REDACTED)''',
+]

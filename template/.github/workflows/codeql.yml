@@ -1,0 +1,38 @@
+# CodeQL - GitHub-native deep static security analysis (Tenacious Standard §3).
+# Stronger than pattern-based SAST: it data-flow-analyses the code for security
+# vulnerabilities. Runs on PRs, pushes, and a weekly schedule to catch newly
+# disclosed query patterns against existing code.
+name: codeql
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+  schedule:
+    - cron: "0 3 * * 1"   # weekly, Monday 03:00 UTC
+
+permissions:
+  contents: read
+  security-events: write   # required to upload CodeQL results
+
+jobs:
+  analyze:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        # Add/remove languages to match the project. CodeQL auto-skips if a
+        # language has no code. Common: python, javascript-typescript.
+        language: ["python", "javascript-typescript"]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v3
+        with:
+          languages: ${{ matrix.language }}
+      - name: Autobuild
+        uses: github/codeql-action/autobuild@v3
+      - name: Analyze
+        uses: github/codeql-action/analyze@v3
+        with:
+          category: "/language:${{ matrix.language }}"

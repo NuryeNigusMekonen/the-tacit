@@ -1,0 +1,67 @@
+# Code-quality gates (Tenacious Standard §1) - keep changes reviewable and clean.
+# PR-size limit fixes the "oversized PR" finding; complexity/dead-code/duplication
+# catch maintainability problems early. Start advisory; flip to blocking once tuned.
+name: quality
+
+on:
+  pull_request:
+
+permissions:
+  contents: read
+
+env:
+  MAX_CHANGED_FILES: "40"     # PRs larger than this are flagged (tune per team)
+  MAX_CHANGED_LINES: "800"
+
+jobs:
+  pr-size:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Check PR size
+        run: |
+          set -euo pipefail
+          base="${{ github.event.pull_request.base.sha }}"
+          files=$(git diff --name-only "$base" HEAD | wc -l | tr -d ' ')
+          lines=$(git diff --numstat "$base" HEAD | awk '{a+=$1; d+=$2} END {print a+d+0}')
+          echo "Changed files: $files (limit ${MAX_CHANGED_FILES})"
+          echo "Changed lines: $lines (limit ${MAX_CHANGED_LINES})"
+          if [ "$files" -gt "${MAX_CHANGED_FILES}" ] || [ "$lines" -gt "${MAX_CHANGED_LINES}" ]; then
+            echo "::warning::This PR is large (${files} files, ${lines} lines). Consider splitting it for safer review (Standard §1)."
+          fi
+
+  python-quality:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Detect Python
+        id: detect
+        run: |
+          if [ -f pyproject.toml ] || ls requirements*.txt >/dev/null 2>&1 || git ls-files '*.py' | grep -q .; then
+            echo "found=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "found=false" >> "$GITHUB_OUTPUT"
+            echo "No Python detected - skipping."
+          fi
+      - uses: actions/setup-python@v5
+        if: steps.detect.outputs.found == 'true'
+        with:
+          python-version: "3.11"
+      - name: Dead code (vulture) + complexity (ruff)
+        if: steps.detect.outputs.found == 'true'
+        run: |
+          pip install vulture ruff
+          # Dead/unused code - advisory.
+          vulture . --min-confidence 80 || true
+          # Complexity & lint - ruff's C901 etc.; advisory until tuned.
+          ruff check --select C901,E,F . || true
+
+  duplicate-code:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Duplicate code (jscpd)
+        run: |
+          npx --yes jscpd . --min-lines 10 --threshold 5 --reporters consoleFull || true

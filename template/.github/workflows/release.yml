@@ -1,0 +1,30 @@
+# Release automation (Tenacious Standard §7) - version, tag, and changelog on
+# merge to the release branch. Uses Conventional Commits to decide the bump
+# (feat -> minor, fix -> patch, BREAKING CHANGE -> major), aligning with the
+# semantic-versioning + release-log discipline of the standard.
+#
+# This produces the version/tag/changelog; promotion + approvals are still
+# governed by the branch-protection rules and (later) The Tacit's release gate.
+name: release
+
+on:
+  push:
+    branches: ["main"]   # change to your production/release branch
+
+permissions:
+  contents: write        # needed to create tags + a GitHub Release
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Create release from conventional commits
+        uses: googleapis/release-please-action@v4
+        with:
+          # release-type infers the bump from commit messages and opens/updates
+          # a release PR; merging it tags the version and writes the changelog.
+          release-type: simple
+          # For language-aware changelogs, set e.g. release-type: python | node.

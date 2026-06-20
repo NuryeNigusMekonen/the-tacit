@@ -1,0 +1,25 @@
+# Conventional Commits check (Tenacious Standard §2 - traceability).
+# Enforces commit/PR-title format (feat:, fix:, chore:, etc.) so history is
+# readable and release automation can infer version bumps. Advisory at first.
+name: commitlint
+
+on:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  pr-title:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check PR title is a conventional commit
+        run: |
+          set -euo pipefail
+          title="${{ github.event.pull_request.title }}"
+          # type(scope)?: subject   - types per Conventional Commits.
+          if echo "$title" | grep -Eq '^(feat|fix|docs|style|refactor|perf|test|build|ci|chore|revert)(\([a-z0-9_-]+\))?!?: .+'; then
+            echo "PR title OK: $title"
+          else
+            echo "::warning::PR title '$title' is not a Conventional Commit (e.g. 'feat: add X' or 'fix(auth): handle Y'). This powers release automation + clean history."
+          fi

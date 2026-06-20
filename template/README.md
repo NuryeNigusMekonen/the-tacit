@@ -24,13 +24,28 @@ real problem - nothing decorative.
 | `.gitleaks.toml` + pre-push hook | Fuller secret coverage + last gate before push | §3 |
 | `Makefile`, `.gitignore`, `.env.example` | Standard command surface + no-secrets | §3, §4 |
 
+## Production-grade additions
+
+| Item | What it does | Standard / problem it fixes |
+|------|--------------|------------------------------|
+| CodeQL (`.github/workflows/codeql.yml`) | Deep, GitHub-native security analysis (data-flow) | §3 - beyond pattern-based SAST |
+| Quality gates (`quality.yml`) | PR-size limit + complexity/dead-code/duplication | §1 - keeps changes reviewable |
+| Release automation (`release.yml`) | Auto-version, changelog, tag from Conventional Commits | §7 - semantic versioning |
+| Conventional commits (`commitlint.yml`) | Enforces commit/PR-title format | §2 - clean, traceable history |
+| Branch protection script (`scripts/setup-branch-protection.sh`) | Applies protection via the GitHub API (settings can't be templated) | §2 - makes checks the real gate |
+
+> Security/quality checks start advisory (won't block on false positives); flip
+> them to blocking once tuned for your project. AI-agent readiness (agent skills,
+> enriched AGENTS.md) is a planned, optional add-on for agent-using projects.
+
 ## First steps in a new repo
 
 1. Create the repo from this template ("Use this template" on GitHub).
 2. `bash scripts/install-hooks.sh` - activates the secret-scanning pre-commit hook.
 3. Fill in the `Makefile` targets for your stack (Python / JS).
 4. Replace `@ORG/...` placeholders in `CODEOWNERS` with real teams.
-5. Set branch protection to require the CI + security checks.
+5. Apply branch protection: `bash scripts/setup-branch-protection.sh <owner/repo>` (needs `gh` with admin rights), or set it manually per `.github/BRANCH_PROTECTION.md`.
+6. Tune the security/quality gates and flip them from advisory to blocking when ready.
 
 ## How this relates to The Tacit
 

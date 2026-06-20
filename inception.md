@@ -153,6 +153,30 @@ Every AI result is stored separately as an `AiArtifact` - never mixed with decis
 
 **Per-project, per-team config (CODEOWNERS):** because the org has **different teams owning different projects**, anything that names *who reviews* cannot be hardcoded in the shared template. The template ships a clearly-marked **placeholder CODEOWNERS**; the correct reviewers are set per project either (a) manually by the team, or (b) **by The Tacit's bootstrapper**, which knows that project's team / Tech Lead / Project Owner from onboarding and writes the right CODEOWNERS for it. This is a concrete example of the split: the template can't know the team, the central system can - so the template stays generic and The Tacit personalizes it per project.
 
+### E2. Template roadmap - production-grade and AI-agent-ready (high level)
+
+The v1 template core (above) is shipped and validated. This is the planned evolution to make it suitable for high-level production projects and projects that use AI coding agents. **All additions are Tenacious-authored and self-contained - no external system (e.g. tenai-infra) is copied into the template.** Principle held throughout: every addition must enforce a standard or fix a real problem - production-grade means *enforced* (not advisory) and *deep* (not surface), not simply more files.
+
+**Track 1 - Production hardening (generic, all projects):**
+- **CodeQL** - GitHub-native deep security scanning, alongside Bandit/Semgrep.
+- **Flip SAST + coverage to blocking** - move from report-only to enforced once tuned per project.
+- **Release automation** - auto-version, changelog, and tag on merge to the release branch (semantic-versioning aligned with §7).
+- **Containerization** - optional `Dockerfile` + `.dockerignore` so projects are deploy-ready.
+- **Extra quality gates in CI** - complexity & dead-code (ruff/vulture), duplicate-code (jscpd), and a **PR-size limit** (fixes the oversized-PR finding).
+- **Conventional commits** - commit-message standard for cleaner history/traceability.
+- **Branch-protection-as-code** - a setup script (or The Tacit's bootstrapper) that applies branch protection via the GitHub API, closing the gap that templates can't carry settings.
+
+**Track 2 - AI-agent readiness (for agent-using projects; Tenacious-authored only):**
+- **Enriched `AGENTS.md`** - the instructions agents read automatically, expanded to encode the full standard.
+- **Tenacious agent skills** (`.agents/skills/`) - freshly written `SKILL.md` files (NOT borrowed): `write-pr-description`, `self-review` (the §1 four questions), `verify-before-commit`, `secret-check`, `split-large-pr`. Passive guidance - they activate only when an agent runs in the repo, and the agent acts under the developer's own access. Conditional value (agent projects only), so kept optional.
+- **Prompt/agent change guardrails** - stricter review routing (CODEOWNERS) for prompt and agent-config files, since they affect many flows.
+- **AI evaluation harness** (deferred - a sub-project, not a template file) - the Standard §6 "frozen task set" + graders for testing AI features; layered on per project, not baked into every repo.
+
+**Sequencing & boundary:**
+- Track 1 lands first (benefits every project, no agent dependency).
+- Track 2 is optional per project (only agent-using teams enable it).
+- The template stays **one strong, generic default**; genuinely project-specific heavy pieces (deploy pipelines, the eval harness, env-specific config) are layered on by the team or by The Tacit per project - not forced into every repo. The more is added, the more per-project fill-in there is, so additions are weighed against that cost.
+
 **F. Code-quality & security scanner**
 - Analyze a project's repo and produce **professional, actionable findings**: hardcoded credentials/secrets, unused variables/methods/constants/imports, duplicate code & repeated patterns, general defects/inconsistencies, improvement insights.
 - **Wraps proven open-source tools** behind a `ScannerPort` (e.g. gitleaks for secrets, ruff/vulture for unused code, jscpd for duplication); AI summarizes findings into actionable guidance. Not a custom static-analysis engine. Mirrors the `Tools.md` Repo Analyzer / PR Reviewer, generalized to the Tenacious standard, multi-language.

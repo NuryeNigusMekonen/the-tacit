@@ -23,11 +23,10 @@ automatically. Engineers do nothing.
 4. **Enforcement status:** Active
 5. **Target repositories:** All repositories (or select by property/pattern).
 6. **Target branches:** add the protected branch names as patterns -
-   `main`, `dev`, `staging`, `production`.
+   `main`, `dev`, `staging`. (`main` is the production branch.)
 7. **Rules** - enable:
    - **Require a pull request before merging** (set required approvals: 1 for
-     dev/staging; for production use the per-repo rule below or a stricter
-     ruleset).
+     dev/staging; for `main` use the stricter rule below).
    - **Require status checks to pass** -> add: `ci`, `security`, `coverage`.
    - **Require review from Code Owners** (so CODEOWNERS routing is enforced).
    - **Block force pushes.**
@@ -37,21 +36,21 @@ automatically. Engineers do nothing.
 
 Done - every repo in the org now enforces these rules with no per-repo work.
 
-## Production needs stricter approval
+## main (production) needs stricter approval
 
-A single org ruleset can't easily require *2* approvals only on `production`.
+A single org ruleset can't easily require *2* approvals only on `main`.
 Two clean options:
-- Create a **second ruleset** targeting only the `production` branch with
+- Create a **second ruleset** targeting only the `main` branch with
   **2 required approvals** (Tech Lead + Project Owner).
-- Or let **The Tacit's bootstrapper** set the production-specific rule per
+- Or let **The Tacit's bootstrapper** set the main-specific rule per
   project when it onboards the repo.
 
 ## What this does NOT do (honest limits)
 
-- **It doesn't create the `dev`/`staging`/`production` branches** - it only
-  protects them once they exist. Branch creation is still done by the per-repo
-  script, by the team, or by The Tacit's bootstrapper.
-- **It can't enforce the directional flow** (e.g. reject a `dev -> production`
+- **It doesn't create the `dev`/`staging` branches** (`main` already exists) -
+  it only protects branches once they exist. Branch creation is still done by
+  the per-repo script, by the team, or by The Tacit's bootstrapper.
+- **It can't enforce the directional flow** (e.g. reject a `dev -> main`
   merge that skips staging). GitHub rulesets gate *who/what*, not *source
   direction*. Full directional enforcement is The Tacit's policy engine.
 

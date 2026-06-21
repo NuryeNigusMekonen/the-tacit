@@ -4,7 +4,7 @@ How work moves through this project (Tenacious Development Standard).
 
 ## Branch flow (§2)
 
-`feature/* -> dev -> staging -> production`. One direction only; no skipped
+`feature/* -> dev -> staging -> main` (main is the production branch). One direction only; no skipped
 stages; no backward flow except an explicit hotfix reconciliation. Cut feature
 branches from `dev`; merge back into `dev` via a pull request.
 

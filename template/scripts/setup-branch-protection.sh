@@ -12,15 +12,16 @@
 # example bash scripts/setup-branch-protection.sh NuryeNigusMekonen/test
 #
 # It will:
-#   1. Create dev, staging, and production branches (if missing).
-#   2. Apply protection to main + dev + staging + production: require PRs,
-#      passing checks, and code-owner review; block force-push/delete;
-#      main and production require 2 approvals, dev and staging require 1.
+#   1. Create dev and staging branches (if missing). main is production.
+#   2. Apply protection to main + dev + staging: require PRs, passing checks,
+#      and code-owner review; block force-push/delete; main requires 2
+#      approvals (Tech Lead + Project Owner), dev and staging require 1.
+# Flow: feature/* -> dev -> staging -> main (main is the production branch).
 # Idempotent - safe to re-run.
 #
-# NOTE on direction (feature -> dev -> staging -> production): GitHub protection
+# NOTE on direction (feature -> dev -> staging -> main): GitHub protection
 # enforces PR-only + checks + reviewers, but does NOT natively reject a
-# wrong-source merge (e.g. dev -> production). Full directional enforcement is
+# wrong-source merge (e.g. dev -> main). Full directional enforcement is
 # The Tacit's policy engine. This script lays the groundwork; see BRANCH_PROTECTION.md.
 set -euo pipefail
 
@@ -29,7 +30,8 @@ DEFAULT="$(gh repo view "$REPO" --json defaultBranchRef -q .defaultBranchRef.nam
 
 # --- 1. create the standard branches off the default branch ------------------
 base_sha="$(gh api "repos/${REPO}/git/refs/heads/${DEFAULT}" -q .object.sha)"
-for b in dev staging production; do
+# main is the production branch (the default). We create only dev and staging.
+for b in dev staging; do
   if gh api "repos/${REPO}/git/refs/heads/${b}" >/dev/null 2>&1; then
     echo "branch '${b}' already exists - skipping create."
   else
@@ -65,14 +67,12 @@ protect() { # $1 = branch, $2 = required approvals
 JSON
 }
 
-# main is the default branch (always exists). Protect it like production -
-# it's the top of the repo and the release workflow runs on it.
-protect main 2                # default branch: highest protection
+# main IS production (the default branch). Flow: feature -> dev -> staging -> main.
+protect main 2                # production (main): Tech Lead + Project Owner
 protect dev 1                 # feature -> dev: automated checks + 1 review
 protect staging 1             # dev -> staging: Tech Lead review
-protect production 2          # staging -> production: Tech Lead + Project Owner
 
 echo ""
-echo "Done. dev / staging / production created and protected."
+echo "Done. main (production) protected; dev / staging created and protected."
 echo "Reminder: the directional rule (no skipping, no backward flow) is only"
 echo "fully enforced by The Tacit's engine - see .github/BRANCH_PROTECTION.md."

@@ -19,7 +19,7 @@ labels: ["bug"]
 3.
 
 ## Environment
-<!-- Branch / environment (dev / staging / production), version if known. -->
+<!-- Branch / environment (dev / staging / main), version if known. -->
 
 
 ## Notes / logs

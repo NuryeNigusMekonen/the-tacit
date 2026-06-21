@@ -24,4 +24,4 @@
 - [ ] Lint / format / build pass locally
 - [ ] No secrets, tokens, or credentials in the diff
 - [ ] Sensitive areas (if touched) called out above
-- [ ] Targets the correct branch per the branch policy (feature → dev → staging → production)
+- [ ] Targets the correct branch per the branch policy (feature → dev → staging → main)

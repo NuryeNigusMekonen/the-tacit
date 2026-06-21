@@ -6,7 +6,7 @@ Conventions for engineers and AI assistants working in this repository
 ## How work flows (Standard §2)
 
 Branches map to environments and promote one direction only:
-`feature/* -> dev -> staging -> production`. Code never skips a stage or flows
+`feature/* -> dev -> staging -> main` (main is the production branch). Code never skips a stage or flows
 backward (except an explicit hotfix reconciliation). Every merge into a
 protected branch goes through a pull request.
 

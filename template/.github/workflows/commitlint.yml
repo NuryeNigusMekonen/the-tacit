@@ -1,6 +1,7 @@
 # Conventional Commits check (Tenacious Standard §2 - traceability).
 # Enforces commit/PR-title format (feat:, fix:, chore:, etc.) so history is
 # readable and release automation can infer version bumps. Advisory at first.
+# gives yellow warning this time but it is also possible to block while trying to merge
 name: commitlint
 
 on:

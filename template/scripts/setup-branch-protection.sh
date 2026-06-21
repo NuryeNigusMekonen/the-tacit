@@ -52,7 +52,7 @@ protect() { # $1 = branch, $2 = required approvals
 {
   "required_status_checks": {
     "strict": true,
-    "contexts": ["ci", "security", "coverage"]
+    "contexts": ["ci", "security", "coverage", "branch-flow"]
   },
   "enforce_admins": true,
   "required_pull_request_reviews": {

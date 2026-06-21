@@ -1,0 +1,64 @@
+# Branch-flow enforcement (Tenacious Standard §2) - enforces the directional
+# rule that GitHub branch protection can't: code must flow
+#   feature/* -> dev -> staging -> main (main is production)
+# with no skipping. This fails a PR whose SOURCE branch isn't the stage directly
+# below its TARGET. (Branch protection gates checks/reviews; this gates direction.)
+#
+# Honest scope: this is a strong guard against the common accidental jump, but a
+# determined admin can still bypass CI. Full, un-bypassable directional
+# enforcement is The Tacit's policy engine. This is the template-level version.
+name: branch-flow
+
+on:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  branch-flow:
+    name: branch-flow
+    runs-on: ubuntu-latest
+    steps:
+      - name: Validate the merge direction
+        run: |
+          set -euo pipefail
+          src="${{ github.head_ref }}"     # the branch the PR is FROM
+          dst="${{ github.base_ref }}"     # the branch the PR is INTO
+
+          echo "PR direction: '${src}' -> '${dst}'"
+
+          # Allowed direction, per target branch:
+          #   main    <- staging   (or a hotfix/* branch)
+          #   staging <- dev
+          #   dev     <- feature/* (or bugfix/*)
+          case "$dst" in
+            main)
+              if [ "$src" = "staging" ] || [[ "$src" == hotfix/* ]]; then
+                echo "OK: $src -> main is allowed."
+              else
+                echo "::error::Illegal merge. 'main' (production) may only receive from 'staging' (or a hotfix/* branch). Got '${src}'. Promote dev -> staging -> main; do not skip."
+                exit 1
+              fi
+              ;;
+            staging)
+              if [ "$src" = "dev" ] || [[ "$src" == hotfix/* ]]; then
+                echo "OK: $src -> staging is allowed."
+              else
+                echo "::error::Illegal merge. 'staging' may only receive from 'dev' (or a hotfix/* branch). Got '${src}'. Open the feature against dev first."
+                exit 1
+              fi
+              ;;
+            dev)
+              if [[ "$src" == feature/* ]] || [[ "$src" == bugfix/* ]] || [[ "$src" == hotfix/* ]]; then
+                echo "OK: $src -> dev is allowed."
+              else
+                echo "::error::Illegal merge. 'dev' should receive from feature/*, bugfix/*, or hotfix/* branches. Got '${src}'."
+                exit 1
+              fi
+              ;;
+            *)
+              # PRs targeting other branches (e.g. a feature branch) aren't gated.
+              echo "OK: target '${dst}' is not a protected stage; no direction rule applied."
+              ;;
+          esac

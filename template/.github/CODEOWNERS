@@ -1,31 +1,39 @@
 # CODEOWNERS - auto-assigns human reviewers to PRs (Tenacious Standard §1, §2).
 # Fixes the "no human review" gap: a human is pulled onto sensitive changes.
+# GitHub requests reviewers by matching the FILES a PR changes to the patterns
+# below. Branch protection then requires their approval (main needs 2).
 #
 # ============================================================================
-# THIS IS A PLACEHOLDER. Each project is owned by a DIFFERENT team, so the
-# reviewers below MUST be set per project. Two ways to do that:
+# HOW TO FILL THIS IN  (do one of the two styles, then delete the unused one)
 #
-#   1. Manually: replace the owners below with this project's real GitHub
-#      team(s) (e.g. @get10acious/team-alpha) or individual @usernames.
+#   Left side  = file pattern (which files trigger the review)
+#   Right side = the reviewer(s): a @username OR a @org/team
+#   Put TWO names on one line to require BOTH (e.g. Tech Lead AND Owner).
 #
-#   2. Automatically: The Tacit's bootstrapper fills this in when the project
-#      is onboarded, using the team / Tech Lead / Project Owner recorded for
-#      that specific project - so each team's project routes reviews to that
-#      team. (The template can't know the team; the central system does.)
+#   STYLE A - individual people (quickest, single repo):
+#       replace  @your-tech-lead     with the Tech Lead's GitHub username
+#       replace  @your-project-owner with the Project Owner's GitHub username
 #
-# Until set, replace every @ORG/<team> with a real team or @username.
+#   STYLE B - GitHub teams (best org-wide; create the teams first):
+#       replace  @your-tech-lead     with  @your-org/tech-leads
+#       replace  @your-project-owner with  @your-org/project-owners
+#
+#   The people/teams MUST have access to the repo, or GitHub ignores them.
+#   (The Tacit's bootstrapper can fill these in per project automatically.)
 # ============================================================================
 
-# Default owner for everything (this project's team).
-*                   @ORG/PROJECT_TEAM
+# Default reviewer for everything - usually the Tech Lead.
+*                   @your-tech-lead
 
-# Sensitive surfaces (Standard §1 risk areas) - require closer review.
-**/auth/**          @ORG/PROJECT_TECH_LEADS
-**/security/**      @ORG/PROJECT_TECH_LEADS
-**/migrations/**    @ORG/PROJECT_TECH_LEADS
-**/alembic/**       @ORG/PROJECT_TECH_LEADS
-/.github/**         @ORG/PROJECT_TECH_LEADS
+# Sensitive surfaces (Standard §1 risk areas) - Tech Lead reviews.
+# Rename these folders to match your project's actual structure.
+**/auth/**          @your-tech-lead
+**/security/**      @your-tech-lead
+**/migrations/**    @your-tech-lead
+**/alembic/**       @your-tech-lead
+/.github/**         @your-tech-lead
 
-# Highest-risk areas - Tech Lead + Project Owner (rename to your folders).
-**/billing/**       @ORG/PROJECT_TECH_LEADS @ORG/PROJECT_OWNERS
-**/payments/**      @ORG/PROJECT_TECH_LEADS @ORG/PROJECT_OWNERS
+# Highest-risk areas - require BOTH Tech Lead AND Project Owner.
+# (Two names on the line = both are requested; main requires 2 approvals.)
+**/billing/**       @your-tech-lead @your-project-owner
+**/payments/**      @your-tech-lead @your-project-owner

@@ -31,19 +31,27 @@ code from the stage directly below it. **`main` is production.**
 - **Promotion is by merge, not cherry-pick** - what runs in production (main) is
   exactly what was validated in staging.
 
-### How far GitHub can enforce direction (honest limits)
+### How the direction is enforced (and its limits)
 
-GitHub branch protection enforces *who can merge* and *that checks pass*, but it
-does **not** natively block "wrong-source" merges by branch name. To approximate
-the directional rule with native settings:
+GitHub branch protection by itself enforces *who can merge* and *that checks
+pass*, but does **not** natively block a "wrong-source" merge by branch name.
+This template closes that gap with a CI check:
 
-- Use **rulesets** on each branch to restrict who can push/merge (PRs only).
-- Keep the branch names disciplined and rely on review + the PR template to
-  confirm the source is correct.
-- For true automatic enforcement of the direction (reject a `dev -> main`
-  PR outright), that decision is made by **The Tacit's policy engine** - which is
-  exactly why the central system exists. The template + protection settings are
-  the groundwork; The Tacit enforces the full directional logic.
+- **`branch-flow` workflow** (`.github/workflows/branch-flow.yml`) runs on every
+  PR and **fails** if the merge skips a stage - e.g. `dev -> main` or
+  `feature/* -> main`. Allowed: `feature|bugfix|hotfix -> dev`, `dev -> staging`,
+  `staging -> main`, and `hotfix/* -> ` any stage (the sanctioned exception).
+- The `setup-branch-protection.sh` script makes **`branch-flow` a required
+  status check**, so a PR that fails the direction check **cannot merge**.
+
+So the directional rule (`feature -> dev -> staging -> main`, no skipping) **is
+enforced** at the template level today.
+
+**Honest limit:** like all CI checks, `branch-flow` can be overridden by a
+repo admin who bypasses checks. It reliably stops the common *accidental* skip,
+but truly un-bypassable directional enforcement (and the role-exact joint
+approval) is **The Tacit's policy engine** - the template is the strong
+groundwork; the central system is the final authority.
 
 ## Per branch, require:
 

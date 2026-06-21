@@ -13,8 +13,9 @@
 #
 # It will:
 #   1. Create dev, staging, and production branches (if missing).
-#   2. Apply protection to each: require PRs, passing checks, and code-owner
-#      review; block force-push/delete; production requires 2 approvals.
+#   2. Apply protection to main + dev + staging + production: require PRs,
+#      passing checks, and code-owner review; block force-push/delete;
+#      main and production require 2 approvals, dev and staging require 1.
 # Idempotent - safe to re-run.
 #
 # NOTE on direction (feature -> dev -> staging -> production): GitHub protection
@@ -64,6 +65,9 @@ protect() { # $1 = branch, $2 = required approvals
 JSON
 }
 
+# main is the default branch (always exists). Protect it like production -
+# it's the top of the repo and the release workflow runs on it.
+protect main 2                # default branch: highest protection
 protect dev 1                 # feature -> dev: automated checks + 1 review
 protect staging 1             # dev -> staging: Tech Lead review
 protect production 2          # staging -> production: Tech Lead + Project Owner

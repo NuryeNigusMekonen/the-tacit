@@ -44,7 +44,7 @@ real problem - nothing decorative.
 2. `bash scripts/install-hooks.sh` - activates the secret-scanning pre-commit hook.
 3. Fill in the `Makefile` targets for your stack (Python / JS).
 4. Replace `@ORG/...` placeholders in `CODEOWNERS` with real teams.
-5. Set up the branch flow: `bash scripts/setup-branch-protection.sh <owner/repo>` (needs `gh` with admin rights). This creates `dev`, `staging`, `production` and protects each (PRs + checks + code-owner review; production needs 2 approvals). Or do it manually per `.github/BRANCH_PROTECTION.md`.
+5. Set up the branch flow. **Recommended for an org:** set protection once for all repos via an org ruleset - see `.github/ORG_RULESET.md` (no per-repo work, no `gh` per engineer). **Per repo:** `bash scripts/setup-branch-protection.sh <owner/repo>` (needs `gh` with admin rights) creates `dev`/`staging`/`production` and protects each, or set it manually per `.github/BRANCH_PROTECTION.md`.
 6. Tune the security/quality gates and flip them from advisory to blocking when ready.
 
 ## How this relates to The Tacit

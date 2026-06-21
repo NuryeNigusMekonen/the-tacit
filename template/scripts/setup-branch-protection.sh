@@ -9,6 +9,7 @@
 #
 # Usage:
 #   scripts/setup-branch-protection.sh <owner/repo>
+# example bash scripts/setup-branch-protection.sh NuryeNigusMekonen/test
 #
 # It will:
 #   1. Create dev, staging, and production branches (if missing).
@@ -41,19 +42,26 @@ done
 protect() { # $1 = branch, $2 = required approvals
   local branch="$1" approvals="$2"
   echo "protecting '${branch}' (require ${approvals} approval(s)) ..."
-  gh api -X PUT "repos/${REPO}/branches/${branch}/protection" \
-    -H "Accept: application/vnd.github+json" \
-    -f "required_status_checks[strict]=true" \
-    -f "required_status_checks[contexts][]=ci" \
-    -f "required_status_checks[contexts][]=security" \
-    -f "required_status_checks[contexts][]=coverage" \
-    -F "enforce_admins=true" \
-    -F "required_pull_request_reviews[required_approving_review_count]=${approvals}" \
-    -F "required_pull_request_reviews[require_code_owner_reviews]=true" \
-    -F "restrictions=null" \
-    -F "allow_force_pushes=false" \
-    -F "allow_deletions=false" \
-    -F "required_conversation_resolution=true" >/dev/null
+  # Send a JSON body so field TYPES are correct (booleans/null, not strings).
+  # The -f/-F flags coerce everything to strings, which the API rejects.
+  cat <<JSON | gh api -X PUT "repos/${REPO}/branches/${branch}/protection" \
+      -H "Accept: application/vnd.github+json" --input - >/dev/null
+{
+  "required_status_checks": {
+    "strict": true,
+    "contexts": ["ci", "security", "coverage"]
+  },
+  "enforce_admins": true,
+  "required_pull_request_reviews": {
+    "required_approving_review_count": ${approvals},
+    "require_code_owner_reviews": true
+  },
+  "restrictions": null,
+  "allow_force_pushes": false,
+  "allow_deletions": false,
+  "required_conversation_resolution": true
+}
+JSON
 }
 
 protect dev 1                 # feature -> dev: automated checks + 1 review

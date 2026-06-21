@@ -11,6 +11,40 @@ these per project automatically once it has write access.
 `feature/* -> dev -> staging -> production`. No skipped stages, no backward flow
 (except an explicit hotfix reconciliation).
 
+## Directional rule - which branch accepts merges FROM which
+
+This is the heart of the flow. Each protected branch should only ever receive
+code from the stage directly below it:
+
+| Target branch | Accepts merges FROM | Never from |
+|---------------|---------------------|-----------|
+| `feature/*`   | cut from `dev`      | -          |
+| `dev`         | `feature/*`         | staging, production |
+| `staging`     | `dev` only          | feature/*, production |
+| `production`  | `staging` only      | feature/*, dev (no skipping) |
+
+- **No skipping:** a feature branch may not merge straight into staging or
+  production; dev may not merge into production.
+- **No backward flow:** production never merges back into staging/dev, except a
+  deliberate **hotfix reconciliation** (a fix made on production is merged back
+  down so it isn't lost).
+- **Promotion is by merge, not cherry-pick** - what runs in production is exactly
+  what was validated in staging.
+
+### How far GitHub can enforce direction (honest limits)
+
+GitHub branch protection enforces *who can merge* and *that checks pass*, but it
+does **not** natively block "wrong-source" merges by branch name. To approximate
+the directional rule with native settings:
+
+- Use **rulesets** on each branch to restrict who can push/merge (PRs only).
+- Keep the branch names disciplined and rely on review + the PR template to
+  confirm the source is correct.
+- For true automatic enforcement of the direction (reject a `dev -> production`
+  PR outright), that decision is made by **The Tacit's policy engine** - which is
+  exactly why the central system exists. The template + protection settings are
+  the groundwork; The Tacit enforces the full directional logic.
+
 ## Per branch, require:
 
 **dev** (receives feature branches)

@@ -13,7 +13,8 @@ permissions:
   contents: read
 
 jobs:
-  build-lint-test:
+  ci:
+    name: ci
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4

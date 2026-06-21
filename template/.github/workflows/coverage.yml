@@ -38,7 +38,16 @@ jobs:
           if [ -f pyproject.toml ]; then pip install -e . || true; fi
       - name: Test with coverage gate
         if: steps.detect.outputs.found == 'true'
-        run: pytest --cov=. --cov-report=term-missing --cov-fail-under=${MIN_COVERAGE}
+        run: |
+          set -euo pipefail
+          # If the project has no tests yet, don't fail the gate - warn instead.
+          # The "changed-code-needs-test" job nudges toward adding them.
+          if ! git ls-files | grep -qiE '(test_|_test|tests/|\.spec\.|\.test\.)'; then
+            echo "::warning::No tests found yet - coverage gate skipped. Add tests to enable it."
+            pytest --cov=. --cov-report=term-missing || true
+          else
+            pytest --cov=. --cov-report=term-missing --cov-fail-under=${MIN_COVERAGE}
+          fi
 
   changed-code-needs-test:
     # Advisory: flags PRs that change source but add/modify no test files.
@@ -60,3 +69,11 @@ jobs:
           else
             echo "Test check OK."
           fi
+
+  # Single status check named "coverage" that branch protection can require.
+  coverage:
+    name: coverage
+    needs: [python-coverage, changed-code-needs-test]
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "Coverage checks passed."

@@ -4,15 +4,16 @@
 # Auto-detects Python and/or Node and runs the right commands. A polyglot repo
 # (both) runs both. Override any command by editing the recipe for your stack.
 
-.PHONY: help install lint format test build secret-scan
+.PHONY: help install lint format test build coverage sast secret-scan
 
 # --- stack detection ---------------------------------------------------------
 HAS_PY  := $(shell { [ -f pyproject.toml ] || ls requirements*.txt >/dev/null 2>&1 || git ls-files '*.py' 2>/dev/null | grep -q . ; } && echo yes)
 HAS_JS  := $(shell [ -f package.json ] && echo yes)
 
 help:
-	@echo "Targets: install | lint | format | test | build | secret-scan"
+	@echo "Targets: install | lint | format | test | build | coverage | sast | secret-scan"
 	@echo "Detected stack: Python=$(if $(HAS_PY),yes,no)  Node=$(if $(HAS_JS),yes,no)"
+	@echo "Other languages: fill in the recipes below (Go, Rust, Java, etc.)."
 
 install:
 ifeq ($(HAS_PY),yes)
@@ -62,6 +63,28 @@ ifeq ($(HAS_JS),yes)
 	npm run build --if-present
 endif
 	@echo "build: done"
+
+coverage:
+ifeq ($(HAS_PY),yes)
+	@# Skip gate gracefully if no tests exist yet; enforce once they do.
+	@if git ls-files | grep -qiE '(test_|_test|tests/|\.spec\.|\.test\.)'; then \
+		pytest --cov=. --cov-report=term-missing --cov-fail-under=$${MIN_COVERAGE:-60}; \
+	else echo "no tests yet - coverage gate skipped"; pytest --cov=. || true; fi
+endif
+ifeq ($(HAS_JS),yes)
+	npm run coverage --if-present || npm test --if-present
+endif
+	@echo "coverage: done"
+
+sast:
+ifeq ($(HAS_PY),yes)
+	pip install bandit >/dev/null 2>&1 || true
+	bandit -r . -ll || true        # advisory; set to blocking once tuned
+endif
+	@# Semgrep is multi-language and runs for any stack.
+	pip install semgrep >/dev/null 2>&1 || true
+	semgrep --config=auto --error || true   # advisory; flip --error to block
+	@echo "sast: done"
 
 secret-scan:
 	bash scripts/secret-scan.sh $$(git ls-files)

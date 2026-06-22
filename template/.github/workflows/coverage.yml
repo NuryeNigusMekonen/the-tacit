@@ -1,6 +1,7 @@
 # Test enforcement (Tenacious Standard §1, §6) - makes testing real, not optional.
-# 1. Coverage gate: fail if coverage drops below the threshold.
-# 2. Changed-code-needs-a-test: warn when a PR changes code but adds no tests.
+# Language-agnostic: CI calls `make coverage`, and the Makefile runs the right
+# tool for the project's stack (or whatever a team fills in for Go/Rust/etc.).
+# The "changed-code-needs-a-test" check below is pure git, so it works anywhere.
 name: coverage
 
 on:
@@ -13,44 +14,23 @@ env:
   MIN_COVERAGE: "60"   # starting threshold; raise as the suite grows.
 
 jobs:
-  python-coverage:
+  coverage:
+    name: coverage
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Detect Python project
-        id: detect
-        run: |
-          if [ -f pyproject.toml ] || ls requirements*.txt >/dev/null 2>&1 || git ls-files '*.py' | grep -q .; then
-            echo "found=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "found=false" >> "$GITHUB_OUTPUT"
-            echo "No Python detected - skipping coverage gate."
-          fi
+      # Provide common runtimes; the Makefile uses whichever the repo needs.
       - uses: actions/setup-python@v5
-        if: steps.detect.outputs.found == 'true'
         with:
           python-version: "3.11"
-      - name: Install
-        if: steps.detect.outputs.found == 'true'
-        run: |
-          pip install pytest pytest-cov
-          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
-          if [ -f pyproject.toml ]; then pip install -e . || true; fi
-      - name: Test with coverage gate
-        if: steps.detect.outputs.found == 'true'
-        run: |
-          set -euo pipefail
-          # If the project has no tests yet, don't fail the gate - warn instead.
-          # The "changed-code-needs-test" job nudges toward adding them.
-          if ! git ls-files | grep -qiE '(test_|_test|tests/|\.spec\.|\.test\.)'; then
-            echo "::warning::No tests found yet - coverage gate skipped. Add tests to enable it."
-            pytest --cov=. --cov-report=term-missing || true
-          else
-            pytest --cov=. --cov-report=term-missing --cov-fail-under=${MIN_COVERAGE}
-          fi
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - name: Coverage (make coverage)
+        run: make coverage
 
   changed-code-needs-test:
-    # Advisory: flags PRs that change source but add/modify no test files.
+    name: changed-code-needs-test
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -60,20 +40,12 @@ jobs:
         run: |
           set -euo pipefail
           base="${{ github.event.pull_request.base.sha }}"
-          head="HEAD"
-          changed=$(git diff --name-only "$base" "$head")
-          code=$(echo "$changed" | grep -E '\.(py|js|jsx|ts|tsx)$' | grep -viE '(test|spec)' || true)
-          tests=$(echo "$changed" | grep -iE '(test|spec)' || true)
+          changed=$(git diff --name-only "$base" HEAD)
+          # Source files vs test files - language-agnostic by name convention.
+          code=$(echo "$changed" | grep -E '\.(py|js|jsx|ts|tsx|go|rs|java|rb|php|cs|kt|swift|c|cpp)$' | grep -viE '(test|spec|_test\.)' || true)
+          tests=$(echo "$changed" | grep -iE '(test|spec|_test\.)' || true)
           if [ -n "$code" ] && [ -z "$tests" ]; then
             echo "::warning::This PR changes code but adds/updates no tests. Add proportionate tests (Standard §1)."
           else
             echo "Test check OK."
           fi
-
-  # Single status check named "coverage" that branch protection can require.
-  coverage:
-    name: coverage
-    needs: [python-coverage, changed-code-needs-test]
-    runs-on: ubuntu-latest
-    steps:
-      - run: echo "Coverage checks passed."

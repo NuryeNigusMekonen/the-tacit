@@ -1,19 +1,20 @@
 # Security checks (Tenacious Standard §3) - secret scanning + static analysis.
-# Un-bypassable backstop: even if local hooks are skipped, this runs in CI.
+# Language-agnostic: secret scanning is text-based (any language); SAST runs via
+# `make sast`, so each project's Makefile decides the right analyzer for its
+# stack (Semgrep is multi-language and runs for all).
 name: security
 
-on: 
+on:
   pull_request:
   push:
     branches: ["**"]
 
-permissions: 
-  contents: read 
+permissions:
+  contents: read
 
 jobs:
   secret-scan:
-    # Zero-dep scanner from the secret-scanning kit; backs the "no credentials
-    # in the repo" rule. gitleaks can be added alongside if licensed.
+    # Zero-dep scanner from the secret-scanning kit - works for any language.
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -22,52 +23,28 @@ jobs:
       - name: Scan tracked config + source files
         run: |
           set -euo pipefail
-          mapfile -t files < <(git ls-files | grep -E '\.(ya?ml|json|sh|py|js|jsx|ts|tsx|env|conf|toml|ini)$' || true)
+          mapfile -t files < <(git ls-files || true)
           if [ ${#files[@]} -gt 0 ] && [ -f scripts/secret-scan.sh ]; then
             bash scripts/secret-scan.sh "${files[@]}"
           else
-            echo "secret-scan: no scanner script or no matching files; skipping."
+            echo "secret-scan: no scanner script or no files; skipping."
           fi
 
-  sast-python:
+  sast:
+    # Static analysis via the Makefile - language-agnostic at the CI layer.
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Detect Python project
-        id: detect
-        run: |
-          if ls *.py >/dev/null 2>&1 || [ -f pyproject.toml ] || ls requirements*.txt >/dev/null 2>&1 || git ls-files '*.py' | grep -q .; then
-            echo "found=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "found=false" >> "$GITHUB_OUTPUT"
-            echo "No Python detected - skipping Bandit."
-          fi
       - uses: actions/setup-python@v5
-        if: steps.detect.outputs.found == 'true'
         with:
           python-version: "3.11"
-      - name: Bandit (static security analysis)
-        if: steps.detect.outputs.found == 'true'
-        run: |
-          pip install bandit
-          # -ll = report medium+ severity; adjust as the project matures.
-          bandit -r . -ll || true   # set to non-zero to block once tuned
-
-  sast-semgrep:
-    # Language-agnostic SAST (covers JS/TS, Python, etc.) via Semgrep rules.
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - name: Semgrep
-        run: |
-          pip install semgrep
-          semgrep --config=auto --error || true   # set --error to block once tuned
+      - name: SAST (make sast)
+        run: make sast
 
   # Single status check named "security" that branch protection can require.
-  # Passes only if all the security jobs above succeed.
   security:
     name: security
-    needs: [secret-scan, sast-python, sast-semgrep]
+    needs: [secret-scan, sast]
     runs-on: ubuntu-latest
     steps:
       - run: echo "All security checks passed."

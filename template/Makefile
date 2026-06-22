@@ -33,7 +33,9 @@ ifeq ($(HAS_PY),yes)
 	ruff check .
 endif
 ifeq ($(HAS_JS),yes)
-	npm run lint --if-present
+	@# Biome (recommended JS/TS linter+formatter, single fast tool). Falls back
+	@# to the project's own `npm run lint` if it defines one.
+	npx --yes @biomejs/biome ci . || npm run lint --if-present
 endif
 	@echo "lint: done"
 
@@ -42,7 +44,7 @@ ifeq ($(HAS_PY),yes)
 	ruff format .
 endif
 ifeq ($(HAS_JS),yes)
-	npm run format --if-present
+	npx --yes @biomejs/biome format --write . || npm run format --if-present
 endif
 	@echo "format: done"
 

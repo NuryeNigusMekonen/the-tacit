@@ -63,11 +63,12 @@ nearly everything. Only heavy CodeQL jobs or a SonarQube service warrant a large
 runner or dedicated host; self-hosted / EC2 runners are worth it only for very
 large repos or to control CI minute costs.
 
-**This template's current choices** match the recommendations above except: it
-ships a zero-dependency secret scanner (with optional Gitleaks) so it works with
-no install, and it leaves JS/TS lint to the project's `npm run lint` (swap in
-Biome by setting that script). Everything else (Ruff, Semgrep, CodeQL, Dependabot,
-jscpd, commitlint, release-please) is already the recommended default.
+**This template applies the recommended defaults directly:** Gitleaks runs as the
+primary CI secret scan (with the zero-dep scanner as an always-on hard-gate
+fallback, so protection holds even without Gitleaks), and `make lint`/`make
+format` use Biome for JS/TS (`biome.json` ships sane defaults; falls back to the
+project's `npm run lint` if defined). Ruff, Semgrep, CodeQL, Dependabot, jscpd,
+vulture, commitlint, and release-please are all wired in and running.
 
 ## First steps in a new repo
 

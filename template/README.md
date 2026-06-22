@@ -38,6 +38,37 @@ real problem - nothing decorative.
 > them to blocking once tuned for your project. AI-agent readiness (agent skills,
 > enriched AGENTS.md) is a planned, optional add-on for agent-using projects.
 
+## Recommended tooling (per category)
+
+The default tool for each check, with the main alternative and where it runs
+best. These are recommendations - the workflows call `make` targets, so a
+project can swap any tool by editing its Makefile.
+
+| Category | Recommended default | Main alternative | Where it runs best |
+|----------|---------------------|------------------|--------------------|
+| Secret scanning | GitHub Secret Protection, or Gitleaks (OSS) | TruffleHog for verified / deep nightly scans | GitHub-native; standard hosted runner for Gitleaks |
+| SAST | Semgrep | CodeQL for deeper GitHub-native analysis | Standard hosted runner; larger runner for heavy CodeQL |
+| Dependency scanning | Dependabot | Renovate (monorepos), Snyk (commercial reachability) | GitHub-native, standard hosted runner |
+| Python lint / format | Ruff | Pylint (deep design checks), Black (formatter) | Standard hosted runner + local hook |
+| JS/TS lint / format | Biome | ESLint + Prettier when plugin coverage matters | Standard hosted runner + local hook |
+| Go lint / format | golangci-lint + gofmt | native `go vet` stack | Standard hosted runner |
+| Rust lint / format | Clippy + rustfmt | (already the native standard) | Standard hosted runner |
+| Testing / coverage | Native per language (coverage.py, Vitest, go test, cargo-llvm-cov) | Codecov for centralized reporting | Standard hosted runner; larger for heavy integration suites |
+| Code quality | jscpd (duplication) | SonarQube (platform), Vulture/Radon (Python extras) | Standard hosted runner; dedicated service for SonarQube |
+| Commit / PR conventions | commitlint + semantic PR-title check | PR-title action alone (squash-merge teams) | Local hook + GitHub Actions |
+| Release automation | release-please | semantic-release (npm), Changesets (JS monorepos) | GitHub Actions, standard hosted runner |
+
+**Runner note:** a standard GitHub-hosted runner (`ubuntu-latest`) handles
+nearly everything. Only heavy CodeQL jobs or a SonarQube service warrant a larger
+runner or dedicated host; self-hosted / EC2 runners are worth it only for very
+large repos or to control CI minute costs.
+
+**This template's current choices** match the recommendations above except: it
+ships a zero-dependency secret scanner (with optional Gitleaks) so it works with
+no install, and it leaves JS/TS lint to the project's `npm run lint` (swap in
+Biome by setting that script). Everything else (Ruff, Semgrep, CodeQL, Dependabot,
+jscpd, commitlint, release-please) is already the recommended default.
+
 ## First steps in a new repo
 
 1. Create the repo from this template ("Use this template" on GitHub).

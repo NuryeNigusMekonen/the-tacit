@@ -15,6 +15,9 @@ permissions:
 jobs:
   ci:
     name: ci
+    # CI is opt-in (Standard §4): only runs when the repo sets CI_ENABLED=true.
+    # Short engagements may run on the Makefile alone; long ones enable CI.
+    if: vars.CI_ENABLED == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4

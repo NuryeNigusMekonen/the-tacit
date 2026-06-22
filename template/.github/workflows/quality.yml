@@ -15,6 +15,7 @@ env:
 
 jobs:
   pr-size:
+    if: vars.CI_ENABLED == 'true'   # opt-in CI (Standard §4)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -33,6 +34,7 @@ jobs:
           fi
 
   python-quality:
+    if: vars.CI_ENABLED == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -59,6 +61,7 @@ jobs:
           ruff check --select C901,E,F . || true
 
   duplicate-code:
+    if: vars.CI_ENABLED == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4

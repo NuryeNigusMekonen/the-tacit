@@ -70,6 +70,27 @@ format` use Biome for JS/TS (`biome.json` ships sane defaults; falls back to the
 project's `npm run lint` if defined). Ruff, Semgrep, CodeQL, Dependabot, jscpd,
 vulture, commitlint, and release-please are all wired in and running.
 
+## CI is opt-in (Standard §4)
+
+The Standard says CI/CD is for engagements expected to **exceed ~3 months**;
+shorter ones may run on the Makefile alone. So the heavy CI checks
+(`ci`, `coverage`, `quality`, `codeql`, `sast`) are **off by default** and only
+run when the repo sets a variable:
+
+```
+Settings -> Secrets and variables -> Actions -> Variables ->
+  New variable:  name = CI_ENABLED   value = true
+```
+
+- **Short project (default):** leave it unset - those checks are skipped; you
+  rely on the Makefile + local hooks.
+- **Long project:** set `CI_ENABLED=true` - the full pipeline runs.
+
+**Always on regardless** (cheap and critical for any project): **secret scanning**
+and **branch-flow** (merge-direction). The branch-protection script requires only
+those when CI is off, and adds `ci`/`coverage` as required when CI is enabled -
+so a short project's PRs are never blocked waiting on skipped checks.
+
 ## First steps in a new repo
 
 1. Create the repo from this template ("Use this template" on GitHub).

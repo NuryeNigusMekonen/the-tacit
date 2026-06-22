@@ -16,6 +16,7 @@ env:
 jobs:
   coverage:
     name: coverage
+    if: vars.CI_ENABLED == 'true'   # opt-in CI (Standard §4)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4

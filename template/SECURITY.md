@@ -15,7 +15,7 @@ This project follows the Tenacious Development Standard for security (§3).
 
 - **Secret scanning** - on every push and pull request.
 - **Dependency scanning** - Dependabot flags and updates vulnerable dependencies.
-- **Static analysis (SAST)** - Bandit / Semgrep scan for code-level security issues.
+- **Static analysis (SAST)** - Semgrep scans every PR; CodeQL runs deeper on the default branch and weekly.
 
 ## Reporting a vulnerability
 

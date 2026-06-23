@@ -1,13 +1,13 @@
 # CodeQL - GitHub-native deep static security analysis (Tenacious Standard §3).
 # Stronger than pattern-based SAST: it data-flow-analyses the code for security
-# vulnerabilities. Runs on PRs, pushes, and a weekly schedule to catch newly
-# disclosed query patterns against existing code.
+# vulnerabilities. Kept LIGHT for speed: it runs on the default branch (main)
+# and weekly - NOT on every PR. Semgrep (make sast) covers per-PR static
+# analysis; CodeQL provides the deeper net periodically.
 name: codeql
 
 on:
   push:
-    branches: ["**"]
-  pull_request:
+    branches: ["main"]    # default branch only (not every PR/branch)
   schedule:
     - cron: "0 3 * * 1"   # weekly, Monday 03:00 UTC
 

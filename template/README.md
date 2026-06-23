@@ -14,7 +14,7 @@ real problem - nothing decorative.
 | Secret scanning (`scripts/` + `.githooks/` + CI) | Blocks credentials in commits/PRs | §3 - no credentials in the repo |
 | CI checks (`.github/workflows/ci.yml`) | build / lint / test on every PR | §4 - the required merge checks |
 | Dependency scanning (`.github/dependabot.yml`) | Flags & auto-updates vulnerable deps | Security upkeep |
-| SAST (`.github/workflows/security.yml`) | Static security analysis (Bandit / Semgrep) | Code-security depth |
+| SAST (`.github/workflows/security.yml` + `codeql.yml`) | Static security analysis - Semgrep on PRs, CodeQL deeper on main + weekly | Code-security depth |
 | Coverage gate + test check (`coverage.yml`) | Enforces tests, flags untested changes | Makes testing real, not optional |
 | `CODEOWNERS` | Auto-assigns human reviewers on sensitive files | Fixes "no human review" |
 | PR + issue templates | Forces "what changed and why" | Fixes "no description" |

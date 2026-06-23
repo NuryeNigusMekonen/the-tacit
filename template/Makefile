@@ -79,11 +79,9 @@ endif
 	@echo "coverage: done"
 
 sast:
-ifeq ($(HAS_PY),yes)
-	pip install bandit >/dev/null 2>&1 || true
-	bandit -r . -ll || true        # advisory; set to blocking once tuned
-endif
-	@# Semgrep is multi-language and runs for any stack.
+	@# Semgrep is multi-language (covers Python too) and runs for any stack.
+	@# It is the single SAST tool here; CodeQL adds deeper analysis on the
+	@# default branch + weekly (see .github/workflows/codeql.yml).
 	pip install semgrep >/dev/null 2>&1 || true
 	semgrep --config=auto --error || true   # advisory; flip --error to block
 	@echo "sast: done"

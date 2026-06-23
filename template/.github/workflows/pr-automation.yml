@@ -1,0 +1,142 @@
+# PR automation helpers - labeling, reviewer hints, and stale-branch cleanup.
+# These are convenience helpers only; they never merge, release, or override a
+# human decision. Versioning is owned by release.yml, commit-title checks by
+# commitlint.yml, reviewer routing by CODEOWNERS, and merge direction by
+# branch-flow.yml - this file intentionally does NOT duplicate or fight those.
+name: pr-automation
+
+on:
+  pull_request:
+    types: [opened, synchronize]
+  schedule:
+    - cron: "0 0 * * SUN"   # weekly stale-branch sweep, Sunday 00:00 UTC
+
+# Least-privilege: just enough to label PRs, comment, and delete merged branches.
+permissions:
+  contents: write          # delete stale branches
+  pull-requests: write     # add labels
+  issues: write            # post comments (PR comments use the issues API)
+
+jobs:
+  # --- 1. Auto-label a PR by the kinds of files it touches --------------------
+  auto-label:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Label by file changes
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const { data: files } = await github.rest.pulls.listFiles({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: context.issue.number,
+            });
+
+            const labels = [];
+            for (const file of files) {
+              const f = file.filename;
+              if (/\.(py|java|js|ts|jsx|tsx|go|rs)$/.test(f)) labels.push('code');
+              if (/\.md$/.test(f)) labels.push('documentation');
+              if (/(test|spec)/i.test(f)) labels.push('testing');
+              if (/(\.github|\.ya?ml|Makefile)/.test(f)) labels.push('ci-cd');
+              if (/(security|auth|crypto|secret)/i.test(f)) labels.push('security');
+              if (/(requirements|pyproject|package\.json|go\.mod|Cargo\.toml)/.test(f)) labels.push('dependencies');
+            }
+
+            const unique = [...new Set(labels)];
+            if (unique.length) {
+              await github.rest.issues.addLabels({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                labels: unique,
+              });
+              console.log(`Applied labels: ${unique.join(', ')}`);
+            }
+
+  # --- 2. Post context-aware review hints (advisory comment) ------------------
+  smart-comments:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Add review hints
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const { data: pr } = await github.rest.pulls.get({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: context.issue.number,
+            });
+
+            let comment = '';
+            if (pr.changed_files > 50) comment += '- Large PR (50+ files) - consider splitting for safer review.\n';
+            if (pr.additions > 500 || pr.deletions > 500) comment += '- Large change (500+ lines) - review carefully.\n';
+            if (pr.labels.some(l => l.name === 'security')) comment += '- Touches security-sensitive files - ensure the right reviewer is on it.\n';
+            if (pr.labels.some(l => l.name === 'dependencies')) comment += '- Dependency change - verify no version conflicts.\n';
+
+            if (comment) {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body: `### Review hints\n\n${comment}`,
+              });
+            }
+
+  # --- 3. Weekly stale-branch cleanup (safe: protects the real flow) ----------
+  cleanup-stale-branches:
+    if: github.event_name == 'schedule'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Delete branches with no commits in 30+ days
+        uses: actions/github-script@v7
+        with:
+          script: |
+            // Never delete the protected stages of THIS template's flow.
+            const PROTECTED = new Set(['main', 'dev', 'staging']);
+            const cutoff = Date.now() - 30 * 24 * 60 * 60 * 1000;
+
+            const branches = await github.paginate(github.rest.repos.listBranches, {
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              per_page: 100,
+            });
+
+            // Branches that have an OPEN PR must not be deleted.
+            const openPRs = await github.paginate(github.rest.pulls.list, {
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              per_page: 100,
+            });
+            const branchesWithOpenPR = new Set(openPRs.map(pr => pr.head.ref));
+
+            let deleted = 0;
+            for (const branch of branches) {
+              if (PROTECTED.has(branch.name)) continue;
+              if (branch.protected) continue;                 // honour branch protection
+              if (branchesWithOpenPR.has(branch.name)) continue;
+
+              const { data: commit } = await github.rest.repos.getCommit({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                ref: branch.commit.sha,
+              });
+              const when = new Date(commit.commit.committer.date).getTime();
+              if (when >= cutoff) continue;
+
+              try {
+                await github.rest.git.deleteRef({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  ref: `heads/${branch.name}`,
+                });
+                console.log(`Deleted stale branch: ${branch.name}`);
+                deleted++;
+              } catch (e) {
+                console.log(`Could not delete ${branch.name}: ${e.message}`);
+              }
+            }
+            console.log(`Cleanup complete: ${deleted} branch(es) deleted.`);

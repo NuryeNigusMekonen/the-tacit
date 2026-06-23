@@ -25,7 +25,7 @@ and Java, and runs the right tools for whatever your project uses.
 | **Pull request & issue templates** | Make every pull request explain what changed and why; keep issue reports consistent. |
 | **Code-quality checks** | Flag oversized pull requests, dead code, and duplicated code to keep changes reviewable. |
 | **PR automation** | Auto-labels pull requests by what they touch, adds review hints (size, security, dependencies), and removes stale branches weekly (never `main`/`dev`/`staging`, never a branch with an open PR). It never merges or releases on its own - humans always decide. |
-| **Claude in your editor** (optional) | A ready `.mcp.json` lets Claude Code act on this repo through the GitHub MCP server. Per-person, opt-in, no secret stored in the repo. See Section 8. |
+| **Claude / Codex in your editor** (optional) | Ready MCP config lets Claude Code and OpenAI Codex talk to GitHub from this repo. Per-person, opt-in, no secret stored in the repo. See Section 8. |
 | **Release automation** | Works out the next version, generates a changelog, and tags a release from your commit messages. |
 | **Branch-flow enforcement** | Keeps code moving one direction - feature → dev → staging → main - and blocks merges that skip a stage. |
 
@@ -137,15 +137,16 @@ This creates the `dev` and `staging` branches and protects `main`, `dev`, and
 
 ---
 
-## 8. Using Claude in your editor (optional)
+## 8. Using Claude or Codex in your editor (optional)
 
-This repo ships a `.mcp.json` so that, if you use **Claude Code** (the CLI or
-the VS Code / JetBrains extension), Claude can act on this repository through
-the **GitHub MCP server** - opening pull requests, reading issues, checking CI,
-and so on, from plain-language requests in your editor.
+This repo ships MCP configuration for both **Claude Code** and **OpenAI Codex**
+so they can act on this repository through the **GitHub MCP server** - opening
+pull requests, reading issues, checking CI, and so on, from plain-language
+requests in your editor.
 
-No secret is stored in the repo: `.mcp.json` references a token by name only
-(`${GITHUB_FINE_GRAINED_TOKEN}`). Never paste a real token into the file - it
+No secret is stored in the repo: `.mcp.json` and `.codex/config.toml` reference
+a token by name only (`${GITHUB_FINE_GRAINED_TOKEN}` /
+`GITHUB_FINE_GRAINED_TOKEN`). Never paste a real token into either file - it
 would be committed and the secret scanner will flag it. Each person connects
 with their **own** token, kept in their environment. To enable it:
 
@@ -154,24 +155,35 @@ with their **own** token, kept in their environment. To enable it:
    - **Repository access:** Only select repositories - pick this repo.
    - **Permissions:** Contents = Read and write, Pull requests = Read and write,
      Issues = Read and write, Metadata = Read (required). Add Workflows =
-     Read and write only if you want Claude to edit GitHub Actions files.
+     Read and write only if you want the assistant to edit GitHub Actions files.
    - **Expiration:** set one (e.g. 90 days) - do not choose "no expiration".
    - Prefer this over a classic token: a fine-grained token is limited to the
      repos and permissions you grant, so a leak has a small blast radius.
    - If the repo is owned by an organization, an org admin may need to approve
      the token before it can reach the repo.
 2. Put the token in your shell environment (not committed to any file). The
-   name must match `.mcp.json` exactly - uppercase, no spaces:
+   name must match both MCP config files exactly - uppercase, no spaces:
    ```
    export GITHUB_FINE_GRAINED_TOKEN=your_token_here
    ```
-3. Open the project in Claude Code. The first time, it asks you to **approve**
-   the GitHub server defined in `.mcp.json` - approve it.
-4. Verify with `claude mcp list` - the `github` server should show connected.
+3. For **Claude Code**, open the project. The first time, it asks you to
+   **approve** the GitHub server defined in `.mcp.json` - approve it.
+4. Verify Claude with `claude mcp list` - the `github` server should show
+   connected.
+5. For **Codex**, open the trusted project in the Codex CLI or IDE extension.
+   Codex reads `.codex/config.toml`.
+6. Verify Codex with `/mcp` in the Codex TUI or the IDE MCP panel - the
+   `github` server should show connected.
 
-The token only ever grants what you give it: a read-only token lets Claude read
-the repo but not push or merge; the write permissions above are what allow it to
-open and manage pull requests. It can never exceed your own GitHub access.
+The token only ever grants what you give it: a read-only token lets Claude or
+Codex read the repo but not push or merge; the write permissions above are what
+allow the assistant to open and manage pull requests. It can never exceed your
+own GitHub access. If you want the MCP server itself to expose read-only tools,
+change the MCP URL in both config files to:
+
+```
+https://api.githubcopilot.com/mcp/readonly
+```
 
 This is per-person and entirely optional. Nothing else in the template depends
 on it; the workflows and checks run on GitHub regardless of whether you use it.

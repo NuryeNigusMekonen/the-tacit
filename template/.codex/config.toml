@@ -1,0 +1,12 @@
+# Project-scoped Codex MCP config.
+# Codex reads this file only after the project is trusted.
+#
+# Each developer must set GITHUB_FINE_GRAINED_TOKEN in their own environment.
+# Never paste a real token into this file.
+
+[mcp_servers.github]
+url = "https://api.githubcopilot.com/mcp/"
+bearer_token_env_var = "GITHUB_FINE_GRAINED_TOKEN"
+
+# For read-only GitHub access, use:
+# url = "https://api.githubcopilot.com/mcp/readonly"

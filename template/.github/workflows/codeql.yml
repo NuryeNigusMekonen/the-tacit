@@ -22,17 +22,39 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        # Add/remove languages to match the project. CodeQL auto-skips if a
-        # language has no code. Common: python, javascript-typescript.
-        language: ["python", "javascript-typescript"]
+        # Languages analysed with build-mode: none - safe to list even when the
+        # repo doesn't use them (CodeQL finds no code and the job is a quick
+        # no-op, so these never fail a project that lacks the language).
+        #
+        # COMPILED LANGUAGES (Go, C/C++) need a real build (build-mode:
+        # autobuild) and would FAIL on a repo that doesn't use them, so they are
+        # NOT listed by default. A Go or C/C++ project should add its entry, e.g.:
+        #   - language: go
+        #     build-mode: autobuild
+        #   - language: c-cpp
+        #     build-mode: autobuild
+        include:
+          - language: python
+            build-mode: none
+          - language: javascript-typescript
+            build-mode: none
+          - language: java-kotlin
+            build-mode: none
+          - language: csharp
+            build-mode: none
+          - language: ruby
+            build-mode: none
+          - language: rust
+            build-mode: none
+          - language: swift
+            build-mode: none
     steps:
       - uses: actions/checkout@v4
       - name: Initialize CodeQL
         uses: github/codeql-action/init@v3
         with:
           languages: ${{ matrix.language }}
-      - name: Autobuild
-        uses: github/codeql-action/autobuild@v3
+          build-mode: ${{ matrix.build-mode }}
       - name: Analyze
         uses: github/codeql-action/analyze@v3
         with:

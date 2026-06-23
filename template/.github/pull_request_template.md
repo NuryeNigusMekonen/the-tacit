@@ -1,4 +1,4 @@
-<!-- Tenacious PR template (Standard §2). Fixes the "no description" problem:
+<!-- PR template. Fixes the "no description" problem:
      a PR must explain what changed and why - not restate the diff. -->
 
 ## What changed and why

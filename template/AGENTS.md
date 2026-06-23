@@ -1,16 +1,16 @@
 # AGENTS.md
 
 Conventions for engineers and AI assistants working in this repository
-(Tenacious Development Standard §1). Read this before making changes.
+. Read this before making changes.
 
-## How work flows (Standard §2)
+## How work flows
 
 Branches map to environments and promote one direction only:
 `feature/* -> dev -> staging -> main` (main is the production branch). Code never skips a stage or flows
 backward (except an explicit hotfix reconciliation). Every merge into a
 protected branch goes through a pull request.
 
-## Before you open a PR (self-review, Standard §1)
+## Before you open a PR
 
 1. Does the change match the requirement? (re-read the ticket/acceptance criteria)
 2. Does it introduce risk outside its stated scope? (auth, shared utils,

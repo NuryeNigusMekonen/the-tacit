@@ -1,4 +1,4 @@
-# Test enforcement (Tenacious Standard §1, §6) - makes testing real, not optional.
+# Test enforcement - makes testing real, not optional.
 # Language-agnostic: CI calls `make coverage`, and the Makefile runs the right
 # tool for the project's stack (or whatever a team fills in for Go/Rust/etc.).
 # The "changed-code-needs-a-test" check below is pure git, so it works anywhere.
@@ -16,7 +16,7 @@ env:
 jobs:
   coverage:
     name: coverage
-    if: vars.CI_ENABLED == 'true'   # opt-in CI (Standard §4)
+    if: vars.CI_ENABLED == 'true'   # opt-in CI
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -38,7 +38,7 @@ jobs:
             pip install pytest >/dev/null 2>&1 || true
             collected=$(pytest --collect-only -q 2>/dev/null | grep -cE '::' || true)
             if [ "$collected" -eq 0 ]; then
-              echo "::warning::Python code is present but pytest collected ZERO tests. A green 'coverage' check here does NOT mean the code is tested - check your test layout / Makefile (Standard §1)."
+              echo "::warning::Python code is present but pytest collected ZERO tests. A green 'coverage' check here does NOT mean the code is tested - check your test layout / Makefile."
             else
               echo "pytest collected $collected test(s) - coverage check is meaningful."
             fi
@@ -62,7 +62,7 @@ jobs:
           code=$(echo "$changed" | grep -E '\.(py|js|jsx|ts|tsx|go|rs|java|rb|php|cs|kt|swift|c|cpp)$' | grep -viE '(test|spec|_test\.)' || true)
           tests=$(echo "$changed" | grep -iE '(test|spec|_test\.)' || true)
           if [ -n "$code" ] && [ -z "$tests" ]; then
-            echo "::warning::This PR changes code but adds/updates no tests. Add proportionate tests (Standard §1)."
+            echo "::warning::This PR changes code but adds/updates no tests. Add proportionate tests."
           else
             echo "Test check OK."
           fi

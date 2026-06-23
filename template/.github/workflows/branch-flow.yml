@@ -1,12 +1,11 @@
-# Branch-flow enforcement (Tenacious Standard §2) - enforces the directional
+# Branch-flow enforcement - enforces the directional
 # rule that GitHub branch protection can't: code must flow
 #   feature/* -> dev -> staging -> main (main is production)
 # with no skipping. This fails a PR whose SOURCE branch isn't the stage directly
 # below its TARGET. (Branch protection gates checks/reviews; this gates direction.)
 #
 # Honest scope: this is a strong guard against the common accidental jump, but a
-# determined admin can still bypass CI. Full, un-bypassable directional
-# enforcement is The Tacit's policy engine. This is the template-level version.
+# determined admin can still bypass CI.
 name: branch-flow
 
 on:

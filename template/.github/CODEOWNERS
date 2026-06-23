@@ -1,4 +1,4 @@
-# CODEOWNERS - auto-assigns human reviewers to PRs (Tenacious Standard §1, §2).
+# CODEOWNERS - auto-assigns human reviewers to PRs.
 # Fixes the "no human review" gap: a human is pulled onto sensitive changes.
 # GitHub requests reviewers by matching the FILES a PR changes to the patterns
 # below. Branch protection then requires their approval (main needs 2).
@@ -19,13 +19,12 @@
 #       replace  @your-project-owner with  @your-org/project-owners
 #
 #   The people/teams MUST have access to the repo, or GitHub ignores them.
-#   (The Tacit's bootstrapper can fill these in per project automatically.)
 # ============================================================================
 
 # Default reviewer for everything - usually the Tech Lead.
 *                   @your-tech-lead
 
-# Sensitive surfaces (Standard §1 risk areas) - Tech Lead reviews.
+# Sensitive surfaces - Tech Lead reviews.
 # Rename these folders to match your project's actual structure.
 **/auth/**          @your-tech-lead
 **/security/**      @your-tech-lead

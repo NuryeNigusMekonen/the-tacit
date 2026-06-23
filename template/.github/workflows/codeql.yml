@@ -1,4 +1,4 @@
-# CodeQL - GitHub-native deep static security analysis (Tenacious Standard §3).
+# CodeQL - GitHub-native deep static security analysis.
 # Stronger than pattern-based SAST: it data-flow-analyses the code for security
 # vulnerabilities. Kept LIGHT for speed: it runs on the default branch (main)
 # and weekly - NOT on every PR. Semgrep (make sast) covers per-PR static
@@ -17,7 +17,7 @@ permissions:
 
 jobs:
   analyze:
-    if: vars.CI_ENABLED == 'true'   # opt-in CI (Standard §4)
+    if: vars.CI_ENABLED == 'true'   # opt-in CI
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false

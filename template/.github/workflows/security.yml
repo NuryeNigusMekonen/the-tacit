@@ -1,4 +1,4 @@
-# Security checks (Tenacious Standard §3) - secret scanning + static analysis.
+# Security checks - secret scanning + static analysis.
 # Language-agnostic: secret scanning is text-based (any language); SAST runs via
 # `make sast`, so each project's Makefile decides the right analyzer for its
 # stack (Semgrep is multi-language and runs for all).
@@ -39,7 +39,7 @@ jobs:
           fi
 
   sast:
-    # Static analysis - part of opt-in CI (Standard §4); gated. Secret scanning
+    # Static analysis - part of opt-in CI; gated. Secret scanning
     # above is NOT gated - it always runs (a leaked secret hurts any project).
     if: vars.CI_ENABLED == 'true'
     runs-on: ubuntu-latest

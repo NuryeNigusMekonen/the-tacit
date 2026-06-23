@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # setup-branch-protection.sh - create the standard branch structure AND apply
-# Tenacious branch protection via the GitHub API (Standard §2). Closes the gap
+# branch protection via the GitHub API. Closes the gap
 # that templates carry FILES but not SETTINGS. Run once per repo after creating
 # it from the template.
 #
@@ -21,8 +21,8 @@
 #
 # NOTE on direction (feature -> dev -> staging -> main): GitHub protection
 # enforces PR-only + checks + reviewers, but does NOT natively reject a
-# wrong-source merge (e.g. dev -> main). Full directional enforcement is
-# The Tacit's policy engine. This script lays the groundwork; see BRANCH_PROTECTION.md.
+# wrong-source merge (e.g. dev -> main). The branch-flow workflow
+# (.github/workflows/branch-flow.yml) enforces the direction on pull requests.
 set -euo pipefail
 
 REPO="${1:?usage: setup-branch-protection.sh <owner/repo>}"
@@ -42,7 +42,7 @@ for b in dev staging; do
 done
 
 # --- 2. protect each branch --------------------------------------------------
-# Required checks depend on whether CI is enabled (Standard §4 - CI is opt-in).
+# Required checks depend on whether CI is enabled.
 # Always required: security (secret scan) + branch-flow - they always run.
 # Required only when CI is on: ci + coverage (those jobs are gated and skipped
 # when CI is off; requiring a skipped check would block merges forever).
@@ -86,5 +86,5 @@ protect staging 1             # dev -> staging: Tech Lead review
 
 echo ""
 echo "Done. main (production) protected; dev / staging created and protected."
-echo "Reminder: the directional rule (no skipping, no backward flow) is only"
-echo "fully enforced by The Tacit's engine - see .github/BRANCH_PROTECTION.md."
+echo "Reminder: the directional rule (no skipping, no backward flow) is"
+echo "enforced on pull requests by .github/workflows/branch-flow.yml."

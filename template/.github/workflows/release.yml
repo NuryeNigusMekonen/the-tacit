@@ -1,10 +1,10 @@
-# Release automation (Tenacious Standard §7) - version, tag, and changelog on
+# Release automation - version, tag, and changelog on
 # merge to the release branch. Uses Conventional Commits to decide the bump
 # (feat -> minor, fix -> patch, BREAKING CHANGE -> major), aligning with the
 # semantic-versioning + release-log discipline of the standard.
 #
 # This produces the version/tag/changelog; promotion + approvals are still
-# governed by the branch-protection rules and (later) The Tacit's release gate.
+# governed by the branch-protection rules.
 name: release
 
 on:

@@ -1,4 +1,4 @@
-# gitleaks config (Standard §3) - used by the local hooks IF gitleaks is
+# gitleaks config - used by the local hooks IF gitleaks is
 # installed, and by CI if enabled. Extends the built-in ruleset; adds a
 # repo-specific rule + allowlist. The zero-dep scanner runs regardless, so
 # gitleaks is optional (fuller coverage when present).

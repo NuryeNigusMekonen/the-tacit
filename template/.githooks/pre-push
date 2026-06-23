@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Pre-push hook - last local gate before secrets leave the machine (Standard §3).
+# Pre-push hook - last local gate before secrets leave the machine.
 # Scans every commit range being pushed, so a secret added in an earlier local
 # commit (not just the tip) is still caught before it reaches the remote.
 set -euo pipefail

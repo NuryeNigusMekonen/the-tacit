@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# secret-scan.sh - zero-dependency, high-precision secret detector (Standard §3).
+# secret-scan.sh - zero-dependency, high-precision secret detector.
 # Refuses to commit/push obvious credential leaks. Tuned for PRECISION (very low
 # false-positive rate) so developers never feel the urge to disable it.
 #

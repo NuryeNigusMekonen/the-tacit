@@ -1,4 +1,4 @@
-# Code-quality gates (Tenacious Standard §1) - keep changes reviewable and clean.
+# Code-quality gates - keep changes reviewable and clean.
 # PR-size limit fixes the "oversized PR" finding; complexity/dead-code/duplication
 # catch maintainability problems early. Start advisory; flip to blocking once tuned.
 name: quality
@@ -15,7 +15,7 @@ env:
 
 jobs:
   pr-size:
-    if: vars.CI_ENABLED == 'true'   # opt-in CI (Standard §4)
+    if: vars.CI_ENABLED == 'true'   # opt-in CI
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -30,7 +30,7 @@ jobs:
           echo "Changed files: $files (limit ${MAX_CHANGED_FILES})"
           echo "Changed lines: $lines (limit ${MAX_CHANGED_LINES})"
           if [ "$files" -gt "${MAX_CHANGED_FILES}" ] || [ "$lines" -gt "${MAX_CHANGED_LINES}" ]; then
-            echo "::warning::This PR is large (${files} files, ${lines} lines). Consider splitting it for safer review (Standard §1)."
+            echo "::warning::This PR is large (${files} files, ${lines} lines). Consider splitting it for safer review."
           fi
 
   python-quality:

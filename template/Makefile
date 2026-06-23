@@ -1,4 +1,4 @@
-# The single command surface for this project (Tenacious Standard §4).
+# The single command surface for this project.
 # CI runs these SAME targets, so local and pipeline behaviour stay identical.
 #
 # Auto-detects Python and/or Node and runs the right commands. A polyglot repo

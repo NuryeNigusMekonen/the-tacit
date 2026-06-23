@@ -1,4 +1,4 @@
-# Secrets - never commit (Standard §3). Only *.example may be committed.
+# Secrets - never commit. Only *.example may be committed.
 .env
 *.env
 !*.env.example

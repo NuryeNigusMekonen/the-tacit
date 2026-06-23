@@ -1,4 +1,4 @@
-# Dependency vulnerability scanning + auto-update PRs (Tenacious Standard §1, §3).
+# Dependency vulnerability scanning + auto-update PRs.
 # Dependabot opens PRs to bump outdated/vulnerable dependencies. Near-zero
 # effort; the resulting PRs still go through the normal review + CI gate.
 version: 2

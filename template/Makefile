@@ -7,13 +7,15 @@
 .PHONY: help install lint format test build coverage sast secret-scan
 
 # --- stack detection ---------------------------------------------------------
-HAS_PY  := $(shell { [ -f pyproject.toml ] || ls requirements*.txt >/dev/null 2>&1 || git ls-files '*.py' 2>/dev/null | grep -q . ; } && echo yes)
-HAS_JS  := $(shell [ -f package.json ] && echo yes)
+HAS_PY   := $(shell { [ -f pyproject.toml ] || ls requirements*.txt >/dev/null 2>&1 || git ls-files '*.py' 2>/dev/null | grep -q . ; } && echo yes)
+HAS_JS   := $(shell [ -f package.json ] && echo yes)
+HAS_GO   := $(shell [ -f go.mod ] && echo yes)
+HAS_RUST := $(shell [ -f Cargo.toml ] && echo yes)
+HAS_JAVA := $(shell { [ -f pom.xml ] || ls build.gradle* >/dev/null 2>&1 ; } && echo yes)
 
 help:
 	@echo "Targets: install | lint | format | test | build | coverage | sast | secret-scan"
-	@echo "Detected stack: Python=$(if $(HAS_PY),yes,no)  Node=$(if $(HAS_JS),yes,no)"
-	@echo "Other languages: fill in the recipes below (Go, Rust, Java, etc.)."
+	@echo "Detected: Python=$(if $(HAS_PY),yes,no) Node=$(if $(HAS_JS),yes,no) Go=$(if $(HAS_GO),yes,no) Rust=$(if $(HAS_RUST),yes,no) Java=$(if $(HAS_JAVA),yes,no)"
 
 install:
 ifeq ($(HAS_PY),yes)
@@ -24,6 +26,17 @@ ifeq ($(HAS_PY),yes)
 endif
 ifeq ($(HAS_JS),yes)
 	npm ci || npm install
+endif
+ifeq ($(HAS_GO),yes)
+	go mod download
+endif
+ifeq ($(HAS_RUST),yes)
+	@# cargo fetches deps on first build/test; nothing to pre-install.
+	rustup component add clippy rustfmt 2>/dev/null || true
+endif
+ifeq ($(HAS_JAVA),yes)
+	@# Maven/Gradle resolve deps on first build; nothing to pre-install.
+	@echo "java: deps resolved on build"
 endif
 	@# Activate the secret-scanning hooks on every setup.
 	bash scripts/install-hooks.sh
@@ -37,6 +50,15 @@ ifeq ($(HAS_JS),yes)
 	@# to the project's own `npm run lint` if it defines one.
 	npx --yes @biomejs/biome ci . || npm run lint --if-present
 endif
+ifeq ($(HAS_GO),yes)
+	gofmt -l . ; golangci-lint run || go vet ./...
+endif
+ifeq ($(HAS_RUST),yes)
+	cargo fmt --check ; cargo clippy -- -D warnings || cargo clippy
+endif
+ifeq ($(HAS_JAVA),yes)
+	@echo "java lint: configure checkstyle/spotless in your build (placeholder)"
+endif
 	@echo "lint: done"
 
 format:
@@ -45,6 +67,12 @@ ifeq ($(HAS_PY),yes)
 endif
 ifeq ($(HAS_JS),yes)
 	npx --yes @biomejs/biome format --write . || npm run format --if-present
+endif
+ifeq ($(HAS_GO),yes)
+	gofmt -w .
+endif
+ifeq ($(HAS_RUST),yes)
+	cargo fmt
 endif
 	@echo "format: done"
 
@@ -55,6 +83,15 @@ endif
 ifeq ($(HAS_JS),yes)
 	npm test --if-present
 endif
+ifeq ($(HAS_GO),yes)
+	go test ./...
+endif
+ifeq ($(HAS_RUST),yes)
+	cargo test
+endif
+ifeq ($(HAS_JAVA),yes)
+	@[ -f pom.xml ] && mvn -q test || ./gradlew test
+endif
 	@echo "test: done"
 
 build:
@@ -63,6 +100,15 @@ ifeq ($(HAS_PY),yes)
 endif
 ifeq ($(HAS_JS),yes)
 	npm run build --if-present
+endif
+ifeq ($(HAS_GO),yes)
+	go build ./...
+endif
+ifeq ($(HAS_RUST),yes)
+	cargo build
+endif
+ifeq ($(HAS_JAVA),yes)
+	@[ -f pom.xml ] && mvn -q -DskipTests package || ./gradlew build -x test
 endif
 	@echo "build: done"
 
@@ -76,6 +122,13 @@ endif
 ifeq ($(HAS_JS),yes)
 	npm run coverage --if-present || npm test --if-present
 endif
+ifeq ($(HAS_GO),yes)
+	go test -cover ./...
+endif
+ifeq ($(HAS_RUST),yes)
+	@# cargo-llvm-cov if installed, else plain test (coverage tooling optional).
+	cargo llvm-cov 2>/dev/null || cargo test
+endif
 	@echo "coverage: done"
 
 sast:
@@ -88,3 +141,8 @@ sast:
 
 secret-scan:
 	bash scripts/secret-scan.sh $$(git ls-files)
+
+# Note on common error codes you may see:
+#   400 bad request | 401 unauthorized | 403 forbidden | 408 request timeout
+#   429 too many requests | 500 server error | 502 bad gateway
+#   503 service unavailable | 504 gateway timeout

@@ -28,7 +28,7 @@ real problem - nothing decorative.
 
 | Item | What it does | Standard / problem it fixes |
 |------|--------------|------------------------------|
-| CodeQL (`.github/workflows/codeql.yml`) | Deep, GitHub-native security analysis (data-flow) | §3 - beyond pattern-based SAST |
+| CodeQL (`.github/workflows/codeql.yml`) | Deep, GitHub-native data-flow security analysis - runs on `main` + weekly (kept off PRs for speed; Semgrep covers per-PR SAST) | §3 - beyond pattern-based SAST |
 | Quality gates (`quality.yml`) | PR-size limit + complexity/dead-code/duplication | §1 - keeps changes reviewable |
 | Release automation (`release.yml`) | Auto-version, changelog, tag from Conventional Commits | §7 - semantic versioning |
 | Conventional commits (`commitlint.yml`) | Enforces commit/PR-title format | §2 - clean, traceable history |

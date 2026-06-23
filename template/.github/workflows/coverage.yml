@@ -30,6 +30,22 @@ jobs:
       - name: Coverage (make coverage)
         run: make coverage
 
+      - name: Guard against a silent pass (Python code but no tests collected)
+        run: |
+          set -euo pipefail
+          # Only meaningful for Python projects; skip otherwise.
+          if [ -f pyproject.toml ] || ls requirements*.txt >/dev/null 2>&1 || git ls-files '*.py' | grep -q .; then
+            pip install pytest >/dev/null 2>&1 || true
+            collected=$(pytest --collect-only -q 2>/dev/null | grep -cE '::' || true)
+            if [ "$collected" -eq 0 ]; then
+              echo "::warning::Python code is present but pytest collected ZERO tests. A green 'coverage' check here does NOT mean the code is tested - check your test layout / Makefile (Standard §1)."
+            else
+              echo "pytest collected $collected test(s) - coverage check is meaningful."
+            fi
+          else
+            echo "No Python project - test-collection guard skipped."
+          fi
+
   changed-code-needs-test:
     name: changed-code-needs-test
     runs-on: ubuntu-latest

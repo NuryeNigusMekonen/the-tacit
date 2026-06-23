@@ -114,6 +114,8 @@ endif
 
 coverage:
 ifeq ($(HAS_PY),yes)
+	@# Threshold = $$MIN_COVERAGE if set (CI forwards the repo variable), else 60.
+	@# This is the single source of truth for the gate; CI does not hardcode it.
 	@# Skip gate gracefully if no tests exist yet; enforce once they do.
 	@if git ls-files | grep -qiE '(test_|_test|tests/|\.spec\.|\.test\.)'; then \
 		pytest --cov=. --cov-report=term-missing --cov-fail-under=$${MIN_COVERAGE:-60}; \
@@ -142,7 +144,3 @@ sast:
 secret-scan:
 	bash scripts/secret-scan.sh $$(git ls-files)
 
-# Note on common error codes you may see:
-#   400 bad request | 401 unauthorized | 403 forbidden | 408 request timeout
-#   429 too many requests | 500 server error | 502 bad gateway
-#   503 service unavailable | 504 gateway timeout

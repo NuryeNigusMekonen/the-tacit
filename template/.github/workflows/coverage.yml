@@ -10,14 +10,17 @@ on:
 permissions:
   contents: read
 
-env:
-  MIN_COVERAGE: "60"   # starting threshold; raise as the suite grows.
-
 jobs:
   coverage:
     name: coverage
     if: vars.CI_ENABLED == 'true'   # opt-in CI
     runs-on: ubuntu-latest
+    # Single source of truth for the threshold: the Makefile owns the default
+    # (60). To raise it project-wide, set a repo variable MIN_COVERAGE in
+    # Settings -> Variables; the line below forwards it to `make coverage`.
+    # Leave it unset to use the Makefile default. CI and local stay in sync.
+    env:
+      MIN_COVERAGE: ${{ vars.MIN_COVERAGE }}
     steps:
       - uses: actions/checkout@v4
       # Provide common runtimes; the Makefile uses whichever the repo needs.
